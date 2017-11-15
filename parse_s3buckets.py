@@ -7,7 +7,7 @@
 import sys
 import simplejson
 
-print "Parsing JSON file and saving output to 'output.csv'\n"
+print "Parsing JSON file and saving output to 'outfile.csv'\n"
 
 #open json file from scout-2
 with open(sys.argv[1]) as data:
