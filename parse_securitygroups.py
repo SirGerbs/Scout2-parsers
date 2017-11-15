@@ -99,43 +99,44 @@ with open('outfile.csv', 'w+') as csv:
 							#for each port, enumerate through source security groups / cidrs
 							while d < len(ports):
 								
+								#commented the below section so as not to skip these ports - we probably want to report on them anyway. 
 								#we don't care about port 80,443,and 1194 because generally those are meant to be open to everyone
-								if ports[d] == "80" or ports[d] == "443" or ports[d] == "1194":
-									d += 1
+								#if ports[d] == "80" or ports[d] == "443" or ports[d] == "1194":
+								#	d += 1
 								
-								else:
-									#determine if the source is a security group or a CIDR
-									for o,p in enumerate(json["services"]["ec2"]["regions"][regions[r]]["vpcs"][vpcs[a]]["security_groups"][sgs[b]]["rules"]["ingress"]["protocols"][proto[c]]["ports"][ports[d]]):
-										if p == "security_groups":
-											
-											#if the ingress rule allows ALL traffic within a security group, output it to the results. Otherwise, no action currently 
-											if proto[c] == "ALL":
-											
-												#store source security group in source_sg variable, then write to CSV file
-												source_sg = str(json["services"]["ec2"]["regions"][regions[r]]["vpcs"][vpcs[a]]["security_groups"][sgs[b]]["rules"]["ingress"]["protocols"][proto[c]]["ports"][ports[d]]["security_groups"][0]["GroupId"])
-												write_string =  str(regions[r]) + "," + str(vpcs[a])+","+str(sgs[b])+","+str(proto[c])+","+str(ports[d])+","+source_sg +"\n"
-												csv.write(write_string)
-												
-										elif p == "cidrs":
-											
-											#output cidrs to variable and then use regex to extract the CIDRs without additional text or symbols
-											cidr = str(json["services"]["ec2"]["regions"][regions[r]]["vpcs"][vpcs[a]]["security_groups"][sgs[b]]["rules"]["ingress"]["protocols"][proto[c]]["ports"][ports[d]]["cidrs"])
-											cidr = re.findall(r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\/\d{1,3}?',cidr)
-											
-											#We only care about the ingress rule if it allows 0.0.0.0/0
-											if "0.0.0.0/0" in cidr:
-											
-												#append all CIDRS into one string separated by semi-colon, then output to results
-												cidr = ";".join(str(itm) for itm in cidr)
-												write_string = str(regions[r]) + "," + str(vpcs[a])+","+str(sgs[b])+","+str(proto[c])+","+str(ports[d])+","+str(cidr)+"\n"
-												csv.write(write_string)
+								#else:
+								#determine if the source is a security group or a CIDR
+								for o,p in enumerate(json["services"]["ec2"]["regions"][regions[r]]["vpcs"][vpcs[a]]["security_groups"][sgs[b]]["rules"]["ingress"]["protocols"][proto[c]]["ports"][ports[d]]):
+									if p == "security_groups":
 										
-										#catch-all
-										else: 
-											print "IF this outputs to the screen then something is wrong!!!"
+										#if the ingress rule allows ALL traffic within a security group, output it to the results. Otherwise, no action currently 
+										if proto[c] == "ALL":
+										
+											#store source security group in source_sg variable, then write to CSV file
+											source_sg = str(json["services"]["ec2"]["regions"][regions[r]]["vpcs"][vpcs[a]]["security_groups"][sgs[b]]["rules"]["ingress"]["protocols"][proto[c]]["ports"][ports[d]]["security_groups"][0]["GroupId"])
+											write_string =  str(regions[r]) + "," + str(vpcs[a])+","+str(sgs[b])+","+str(proto[c])+","+str(ports[d])+","+source_sg +"\n"
+											csv.write(write_string)
+											
+									elif p == "cidrs":
+										
+										#output cidrs to variable and then use regex to extract the CIDRs without additional text or symbols
+										cidr = str(json["services"]["ec2"]["regions"][regions[r]]["vpcs"][vpcs[a]]["security_groups"][sgs[b]]["rules"]["ingress"]["protocols"][proto[c]]["ports"][ports[d]]["cidrs"])
+										cidr = re.findall(r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\/\d{1,3}?',cidr)
+										
+										#We only care about the ingress rule if it allows 0.0.0.0/0
+										if "0.0.0.0/0" in cidr:
+										
+											#append all CIDRS into one string separated by semi-colon, then output to results
+											cidr = ";".join(str(itm) for itm in cidr)
+											write_string = str(regions[r]) + "," + str(vpcs[a])+","+str(sgs[b])+","+str(proto[c])+","+str(ports[d])+","+str(cidr)+"\n"
+											csv.write(write_string)
 									
-									#increase all counters
-									d += 1
+									#catch-all
+									else: 
+										print "IF this outputs to the screen then something is wrong!!!"
+								
+								#increase all counters
+								d += 1
 							c +=1
 					b += 1
 			a += 1
