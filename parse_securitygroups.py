@@ -121,7 +121,7 @@ with open('outfile.csv', 'w+') as csv:
 										
 										#output cidrs to variable and then use regex to extract the CIDRs without additional text or symbols
 										cidr = str(json["services"]["ec2"]["regions"][regions[r]]["vpcs"][vpcs[a]]["security_groups"][sgs[b]]["rules"]["ingress"]["protocols"][proto[c]]["ports"][ports[d]]["cidrs"])
-										cidr = re.findall(r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\/\d{1,3}?',cidr)
+										cidr = re.findall(r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\/\d+',cidr)
 										
 										#We only care about the ingress rule if it allows 0.0.0.0/0
 										if "0.0.0.0/0" in cidr:
