@@ -1,3 +1,4 @@
+#!/usr/bin/python
 #v1.0
 #10/27/2017
 #parse out the EC2 security groups that permit access to ports to 0.0.0.0/0
@@ -7,26 +8,41 @@
 import sys
 import simplejson
 import re
+import os
 
-print "Parsing JSON file and saving output to 'output.txt'\n"
+#Search for Scout2 results file
+
+for filename in os.listdir('scout2-report/inc-awsconfig'):
+	if re.search(r'^aws_config\-.*', filename):
+		jsonFile = 'scout2-report/inc-awsconfig/'+filename
+
+if not jsonFile:
+	if len(sys.argv) is not 2:
+		print "Please specify the location of the scout2 aws_config-<profile>.js file.\n"
+		exit(0)
+	else:
+		jsonFile = sys.argv(1)
+print "Parsing JSON file and saving output to 'sgFindings.csv'\n"
+
+#if os.path.isfile(scout2-report/inc-awsconfig/aws_config-*.js:
+#	print 'works'
 
 #open json file from scout-2
-with open(sys.argv[1]) as data:
+with open(jsonFile) as data:
 	contents = data.read()
 	contents = contents.replace('\n','') #remove line breaks
 	contents = contents.replace('aws_info =', '') #remove the text at the beginnging of the json file
-json = simplejson.loads(contents)
 
-#commented out code can be used for testing 
-#for x,y in enumerate(json["services"]["ec2"]["regions"][regions[r]]["vpcs"]["vpc-1730fe73"]["security_groups"]["sg-a87e3edb"]["rules"]["ingress"]["protocols"]["TCP"]["ports"]["9000"]["cidrs"]):
-#	print y
-	
+json = simplejson.loads(contents)
 
 #create array of regions and populate
 regions = []
 for key,value in enumerate(json["services"]["ec2"]["regions"]):
 	regions.append(value)
 
+#create array of externally accessible instances
+#externally_accessible_instances = []	
+	
 #counter declarations
 r = 0 #counter to enumerate through regions
 a = 0 #counter to enumerate through vpcs 
@@ -34,11 +50,16 @@ b = 0 #counter to enumerate through security groups
 c = 0 #counter to enumerate through protocols
 d = 0 #counter to enumerate through ports
 
+#commented out code can be used for testing 
+#for x,y in enumerate(json["services"]["ec2"]["regions"][regions[r]]["vpcs"]["vpc-c23edda6"]["security_groups"]["sg-ef692694"]["name"]): #["rules"]["ingress"]["protocols"]["TCP"]["ports"]["9000"]["cidrs"]):
+#	print y
+#exit(1)	
+
 #open output file
-with open('outfile.csv', 'w+') as csv:
+with open('sgFindings.csv', 'w+') as csv:
 
 	#write file headers
-	csv.write("Region,VPC ID,Security Group ID,Protocol,Port,Open To\n")
+	csv.write("Region,VPC ID,Security Group ID,Security Group Name,Protocol,Port,Open To,In Use\n ")
 	#print vpcs
 	
 	#loop through the regions
@@ -57,8 +78,6 @@ with open('outfile.csv', 'w+') as csv:
 			sgs = []
 			for key,value in enumerate(json["services"]["ec2"]["regions"][regions[r]]["vpcs"][vpcs[a]]["security_groups"]):
 				sgs.append(value)
-				
-			
 			#for each vpc, loop through security groups
 			while b < len(sgs):
 				
@@ -68,7 +87,17 @@ with open('outfile.csv', 'w+') as csv:
 				#	break
 				
 				c = 0 #reset protocol counter for each security group
+				in_use = "No" #set variable for whether security group is in use to No by default
+				#externally_accessible = "No"
 				
+				#see if security group is in use
+				for key,value in enumerate(json["services"]["ec2"]["regions"][regions[r]]["vpcs"][vpcs[a]]["security_groups"][sgs[b]]):
+					if value == "used_by":
+						in_use = "Yes"
+				
+				#store security group name
+				name = json["services"]["ec2"]["regions"][regions[r]]["vpcs"][vpcs[a]]["security_groups"][sgs[b]]["name"]
+
 				#if the security group ingress rule count in 0, skip to the next security group
 				if json["services"]["ec2"]["regions"][regions[r]]["vpcs"][vpcs[a]]["security_groups"][sgs[b]]["rules"]["ingress"]["count"] == 0:
 					#print "security group with empty ingress rules"
@@ -114,7 +143,7 @@ with open('outfile.csv', 'w+') as csv:
 										
 											#store source security group in source_sg variable, then write to CSV file
 											source_sg = str(json["services"]["ec2"]["regions"][regions[r]]["vpcs"][vpcs[a]]["security_groups"][sgs[b]]["rules"]["ingress"]["protocols"][proto[c]]["ports"][ports[d]]["security_groups"][0]["GroupId"])
-											write_string =  str(regions[r]) + "," + str(vpcs[a])+","+str(sgs[b])+","+str(proto[c])+","+str(ports[d])+","+source_sg +"\n"
+											write_string =  str(regions[r]) + "," + str(vpcs[a])+","+str(sgs[b])+","+str(name)+","+str(proto[c])+","+str(ports[d])+","+source_sg + "," + in_use +"\n"
 											csv.write(write_string)
 											
 									elif p == "cidrs":
@@ -128,7 +157,7 @@ with open('outfile.csv', 'w+') as csv:
 										
 											#append all CIDRS into one string separated by semi-colon, then output to results
 											cidr = ";".join(str(itm) for itm in cidr)
-											write_string = str(regions[r]) + "," + str(vpcs[a])+","+str(sgs[b])+","+str(proto[c])+","+str(ports[d])+","+str(cidr)+"\n"
+											write_string = str(regions[r]) + "," + str(vpcs[a])+","+str(sgs[b])+","+str(name)+","+str(proto[c])+","+str(ports[d])+","+str(cidr)+ "," + in_use +"\n"
 											csv.write(write_string)
 									
 									#catch-all
