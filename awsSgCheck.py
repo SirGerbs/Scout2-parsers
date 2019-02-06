@@ -10,18 +10,12 @@ import simplejson
 import re
 import os
 
-#Search for Scout2 results file
-
-for filename in os.listdir('scout2-report/inc-awsconfig'):
-	if re.search(r'^aws_config\-.*', filename):
-		jsonFile = 'scout2-report/inc-awsconfig/'+filename
-
-if not jsonFile:
-	if len(sys.argv) is not 2:
-		print "Please specify the location of the scout2 aws_config-<profile>.js file.\n"
-		exit(0)
-	else:
-		jsonFile = sys.argv(1)
+if len(sys.argv) is not 2:
+	print "Please specify the location of the scoutsuite scoutsuite_results-aws-<profile>.js file.\n"
+	exit(0)
+else:
+	jsonFile = sys.argv[1]
+	
 print "Parsing JSON file and saving output to 'sgFindings.csv'\n"
 
 #if os.path.isfile(scout2-report/inc-awsconfig/aws_config-*.js:
@@ -31,7 +25,7 @@ print "Parsing JSON file and saving output to 'sgFindings.csv'\n"
 with open(jsonFile) as data:
 	contents = data.read()
 	contents = contents.replace('\n','') #remove line breaks
-	contents = contents.replace('aws_info =', '') #remove the text at the beginnging of the json file
+	contents = contents.replace('scoutsuite_results =', '') #remove the text at the beginnging of the json file
 
 json = simplejson.loads(contents)
 
