@@ -11,7 +11,7 @@ import re
 import os
 
 if len(sys.argv) is not 2:
-	print "Please specify the location of the scoutsuite scoutsuite_results-aws-<profile>.js file.\n"
+	print "Please specify the location of the scoutsuite scoutsuite_results-aws-<profile>.js file.\nThis file is usually found in \"scoutsuite-report/scoutsuite-results\"\n"
 	exit(0)
 else:
 	jsonFile = sys.argv[1]
